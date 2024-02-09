@@ -1,0 +1,77 @@
+# Define when this workflow runs
+on:
+  # Run this workflow on pull requests to main and release branches
+  pull_request:
+    branches:
+      - main
+      - 'release/*'
+  # Run this workflow on pushes to main and release branches
+  push:
+    branches:
+      - main
+      - 'release/*'
+
+# Define the name of this workflow
+name: "Build & Release"
+
+# Define the jobs to be executed
+jobs:
+  # Define a job named 'build'
+  build:
+    # Give the job a name
+    name: Build & Release
+    # Specify the operating system on which the job runs
+    runs-on: macos-latest
+
+    # Define the steps to be executed in this job
+    steps:
+      # Step 1: Checkout Repository
+      - name: Checkout Repository
+        # Use the latest version of the checkout action to fetch the repository's code
+        uses: actions/checkout@v1
+
+      # Step 2: Set Up Java
+      - name: Set Up Java
+        # Use the latest version of the setup-java action to set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '12.x'
+
+      # Step 3: Set Up Flutter
+      - name: Set Up Flutter
+        # Use the latest version of the flutter-action to set up Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          flutter-version: '3.16.3'
+
+      # Step 4: Install Dependencies
+      - name: Install Dependencies
+        # Run the command to fetch Flutter dependencies
+        run: flutter pub get
+
+      # Step 5: Test Flutter app
+      - name: Test Flutter app
+        # Run tests for the Flutter app
+        run: flutter test
+
+      # Step 6: Build APK
+      - name: Build APK
+        # Build the APK for the Flutter app
+        run: flutter build apk --release
+
+      # Step 7: Build App Bundle
+      - name: Build App Bundle
+        # Build the app bundle for the Flutter app
+        run: flutter build appbundle
+
+      # Step 8: Upload Artifacts
+      - name: Upload Artifacts
+        # Use the latest version of the release-action to upload artifacts
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "build/app/outputs/flutter-apk/app-release.apk, build/app/outputs/bundle/release/app-release.aab"
+          # Tag the release with a version number and GitHub's run number
+          tag: v1.0.${{ github.run_number }}
+          # Use the token from GitHub Secrets for authentication
+          token: ${{ secrets.TOKEN }}
+          
